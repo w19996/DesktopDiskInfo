@@ -1,0 +1,30 @@
+﻿@TEAM ENVI^ EnviMode=1| ENVI^ ForceLocal=1
+CALL $--ret:&DPIA user32.dll,SetProcessDPIAware //设置dpi感知模式
+CALL $--ret:&hdc user32.dll,GetDC,#0  //获取显示器0（一般是主显示器）的句柄
+CALL $--ret:&LOGPIXELSX Gdi32.dll,GetDeviceCaps,#%hdc%,#88     //获取显示器横向DPI，LOGPIXELSX为#88，纵向LOGPIXELSY为#90,两个值是一样的。
+FIND --class:Shell_TrayWnd --wid* &hw,
+ENVI @@POS=?%&hw%:X:Y:W:HR:
+TEAM CALC l1=%W%-10-200|CALC t1=%Y%-30
+CALL finddrv
+_SUB finddrv,L%l1%T%t1%W200H%h1%,,,,-#:,-scale:%&LOGPIXELSX% 
+    ENVI @finddrv.MSG=0x001C:ENVI @finddrv.Visible=0
+    MENU Menu1,退出程序,KILL \
+    TEAM FDRV retdrv=*:|SET n=1|SET t=0
+    //mess %retdrv%
+    FORX  *  %retdrv%,i,
+    {*   
+        FORM -userall &a=%i%
+        FORM -free &d=%i%
+        CALC b=%a%/pow(2,30) #1 //总大小
+        CALC e=%d%/pow(2,30) #1 //剩余大小
+        CALC f=%b%-%e% #1 //已用大小
+        CALC g=%f%/%b%*100 #1 //已用百分比
+        //mess. %g% 
+        ^ITEM -left -font:10:宋体 Item%n%,L0T%t%W200H30,,EXEC $%i%
+        ENVI @Item%n%.percent=%g%::0x52F04A::%i%剩余%e%G 共%b%G
+        CALC t=%n%*30+%n%*5
+        CALC h1=%t%-3
+        ENVI @this.pos=:(%Y%-%t%-10)::(%h1%*%&LOGPIXELSX%/96)           
+        CALC n=%n%+1        
+    }
+_end
